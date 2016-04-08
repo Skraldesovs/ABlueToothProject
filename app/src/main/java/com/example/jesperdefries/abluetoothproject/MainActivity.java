@@ -67,6 +67,8 @@ public class MainActivity extends Activity {
                 e.printStackTrace();
             }
 
+
+
             //Open Button
 /*            openButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
