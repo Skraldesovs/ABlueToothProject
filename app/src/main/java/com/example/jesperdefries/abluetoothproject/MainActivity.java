@@ -4,11 +4,9 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.view.View;
 import android.widget.TextView;
 import android.widget.EditText;
 import android.widget.Button;
@@ -46,6 +44,8 @@ public class MainActivity extends Activity {
         myLabel = (TextView) findViewById(R.id.label);
         myTextbox = (EditText) findViewById(R.id.entry);
 
+        counter = 0;
+
         // TODO: 05-04-2016 make check for bluetooth is turned on
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -61,8 +61,8 @@ public class MainActivity extends Activity {
             finish();
         }else {
             try {
-                findBT();
-                openBT();
+                findBluetooth();
+                openBluetooth();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -71,8 +71,8 @@ public class MainActivity extends Activity {
 /*            openButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     try {
-                        findBT();
-                        openBT();
+                        findBluetooth();
+                        openBluetooth();
                     } catch (IOException ex) {
                     }
                 }
@@ -96,7 +96,7 @@ public class MainActivity extends Activity {
 /*            closeButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     try {
-                        closeBT();
+                        closeBluetooth();
                     } catch (IOException ex) {
                     }
                 }
@@ -104,7 +104,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void findBT() {
+    private void findBluetooth() {
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
         if (pairedDevices.size() > 0) {
             for (BluetoothDevice device : pairedDevices) {
@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
      * open bluetooth, connect to socket and send setup data
      * @throws IOException
      */
-    private void openBT() throws IOException {
+    private void openBluetooth() throws IOException {
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //Standard SerialPortService ID
         mmSocket = mmDevice.createRfcommSocketToServiceRecord(uuid);
         mmSocket.connect();
@@ -153,11 +153,11 @@ public class MainActivity extends Activity {
      */
     private void handleData(String data){
         if(!(data.equals('\r')||data.equals('?')||data.isEmpty())) {
-            myLabel.setText("forstået: " + data);
-            System.out.println("Handle: " + data);
+            // TODO: 08-04-2016 detect/select pid
 
-            myLabel.append(data);
-
+            // TODO: 08-04-2016 stuff
+            counter++;
+            myLabel.setText(counter);
         }
     }
 
@@ -166,7 +166,7 @@ public class MainActivity extends Activity {
      */
     private void beginListenForData() {
         final Handler handler = new Handler();
-        final byte delimiter = 13; //This is the ASCII code for carriage return
+        final byte delimiter = 13;              //This is the ASCII code for carriage return
 
         stopWorker = false;
         readBufferPosition = 0;
@@ -186,10 +186,12 @@ public class MainActivity extends Activity {
                                     System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
                                     final String data = new String(encodedBytes, "US-ASCII");
                                     readBufferPosition = 0;
-
                                     // handle incomming data
                                     handler.post(new Runnable() {
                                         public void run() {
+                                            //"412 74 0F 00 36 7A 92 00 10"; // hastighed og odometer
+                                            //"210 00 00 4F 41 00 00 00 00"; // throttle
+                                            //"236 00";                      // steering wheel
                                             handleData(data);
                                         }
                                     });
@@ -232,7 +234,7 @@ public class MainActivity extends Activity {
      * close bluetooth connection
      * @throws IOException
      */
-    private void closeBT() throws IOException {
+    private void closeBluetooth() throws IOException {
         stopWorker = true;
         mmOutputStream.close();
         mmInputStream.close();
